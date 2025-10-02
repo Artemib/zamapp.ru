@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'file_fetch' => [
+        'proxy' => env('FILE_FETCH_PROXY'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],

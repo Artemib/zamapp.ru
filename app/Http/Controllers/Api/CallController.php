@@ -15,6 +15,7 @@ use App\QueryFilters\TimeFromMsk;
 use App\QueryFilters\TimeFromUtc;
 use App\QueryFilters\TimeToMsk;
 use App\QueryFilters\TimeToUtc;
+use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -60,15 +61,18 @@ class CallController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(CallRequest $request)
+    public function store(CallRequest $request, FileStorageService $fileStorageService)
     {
         $data = $request->validated();
 
         $data['datetime'] = Carbon::createFromFormat('Ymd\THis\Z', $request->input('datetime'), 'UTC');
         $data['from_source_name'] = $request->input('from_source_name') . '_api_v1';
 
+        // Сохраним файл на локальный сервер
+        if ($data['link_record_pbx']) {
+            $data['link_record_crm'] = $fileStorageService->saveFromUrl($data['link_record_pbx']);
+        }
 
-//        dd($data);
 
         $call = Call::create($data);
 

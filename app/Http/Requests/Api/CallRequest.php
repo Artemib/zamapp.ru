@@ -55,6 +55,7 @@ class CallRequest extends FormRequest
             'diversion_phone' => normalize_phone($this->input('diversion_phone')),
             'duration' => $this->input('duration') ?? 0,
             'wait' => $this->input('wait') ?? 0,
+            'link_record_pbx' => $this->input('link_record_pbx') ?? null,
         ]);
     }
 
