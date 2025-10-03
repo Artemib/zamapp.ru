@@ -30,17 +30,55 @@ class Call extends Model
     protected $appends = [
         'status_name',
         'type_name',
+        'datetime_formatted',
     ];
 
 
     public function getStatusNameAttribute(): string
     {
+        if ($this->status === null || !array_key_exists($this->status, CallConstants::STATUSES)) {
+            return 'Неизвестно';
+        }
+        
         return CallConstants::STATUSES[$this->status];
     }
 
+
+
     public function getTypeNameAttribute(): string
     {
+        if ($this->type === null || !array_key_exists($this->type, CallConstants::TYPES)) {
+            return 'Неизвестно';
+        }
+        
         return CallConstants::TYPES[$this->type];
+    }
+
+    public function getClientPhoneNameAttribute(): ?string
+    {
+        if (empty($this->client_phone)) {
+            return null;
+        }
+        
+        return '+7' . $this->client_phone;
+    }
+
+    public function getDiversionPhoneNameAttribute(): ?string
+    {
+        if (empty($this->diversion_phone)) {
+            return null;
+        }
+        
+        return '+7' . $this->diversion_phone;
+    }
+
+    public function getDatetimeFormattedAttribute(): ?string
+    {
+        if (empty($this->datetime)) {
+            return null;
+        }
+        
+        return format_date_custom($this->datetime, true, 'd MMM HH:mm');
     }
 
 }

@@ -47,3 +47,47 @@ if (!function_exists('normalize_phone')) {
         return $digits;
     }
 }
+
+if (!function_exists('format_date_custom')) {
+    /**
+     * Форматирует дату в русском формате с заданной временной зоной
+     * 
+     * @param string|\DateTime|\Carbon\Carbon|null $date
+     * @param bool $fullMonthName Использовать полное название месяца (по умолчанию: false - сокращенное)
+     * @param string $format Формат даты (по умолчанию: 'd MMM yyyy HH:mm:ss')
+     * @param string $timeZone Временная зона (по умолчанию: 'Europe/Moscow')
+     * @return string|null
+     */
+    function format_date_custom($date, bool $fullMonthName = false,string $format = 'd MMM yyyy HH:mm:ss', string $timeZone = 'Europe/Moscow'): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+        
+        // Конвертируем в заданную временную зону
+        $carbonDate = \Carbon\Carbon::parse($date)->setTimezone($timeZone);
+        
+        // Автоматически определяем формат месяца (только если в формате есть MMM)
+        if ($fullMonthName && strpos($format, 'MMM') !== false && strpos($format, 'MMMM') === false) {
+            $format = str_replace('MMM', 'MMMM', $format);
+        }
+        
+        // Используем IntlDateFormatter для русской локализации
+        $formatter = new \IntlDateFormatter(
+            'ru_RU',
+            \IntlDateFormatter::NONE,
+            \IntlDateFormatter::NONE,
+            $timeZone,
+            \IntlDateFormatter::GREGORIAN,
+            $format
+        );
+        
+        // Убираем точку после сокращения месяца (только для сокращенных названий)
+        $formatted = $formatter->format($carbonDate->toDateTime());
+        if (!$fullMonthName) {
+            $formatted = str_replace('.', '', $formatted);
+        }
+        
+        return $formatted;
+    }
+}
