@@ -60,7 +60,7 @@ class Call extends Model
             return null;
         }
         
-        return '+7' . $this->client_phone;
+        return $this->client_phone;
     }
 
     public function getDiversionPhoneNameAttribute(): ?string
@@ -69,7 +69,7 @@ class Call extends Model
             return null;
         }
         
-        return '+7' . $this->diversion_phone;
+        return $this->diversion_phone;
     }
 
     public function getDatetimeFormattedAttribute(): ?string

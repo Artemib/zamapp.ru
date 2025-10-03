@@ -68,12 +68,6 @@ class CallController extends Controller
         $data['datetime'] = Carbon::createFromFormat('Ymd\THis\Z', $request->input('datetime'), 'UTC');
         $data['from_source_name'] = $request->input('from_source_name') . '_api_v1';
 
-        // Сохраним файл на локальный сервер
-        if ($data['link_record_pbx']) {
-            $data['link_record_crm'] = $fileStorageService->saveFromUrl($data['link_record_pbx']);
-        }
-
-
         $call = Call::create($data);
 
         return response()->json([

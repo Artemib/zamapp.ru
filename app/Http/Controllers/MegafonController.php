@@ -65,11 +65,6 @@ class MegafonController extends Controller
         // Конвертация даты из формата Megafon в объект Carbon
         $data['datetime'] = Carbon::createFromFormat('Ymd\THis\Z', $data['datetime'], 'UTC');
 
-        // Сохраним файл на локальный сервер, если ссылка присутствует
-        if (!empty($data['link_record_pbx'])) {
-            $data['link_record_crm'] = $fileStorageService->saveFromUrl($data['link_record_pbx']);
-        }
-
         // Создание записи звонка в базе данных
         $call = Call::create($data);
 
