@@ -12,6 +12,9 @@ use MoonShine\Laravel\DependencyInjection\MoonShineConfigurator;
 use App\MoonShine\Resources\MoonShineUserResource;
 use App\MoonShine\Resources\MoonShineUserRoleResource;
 use App\MoonShine\Resources\CallResource;
+use App\MoonShine\Resources\OrderResource;
+use App\MoonShine\Pages\OrderMergePage;
+use App\MoonShine\Pages\OrderMergePageV2;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -27,9 +30,12 @@ class MoonShineServiceProvider extends ServiceProvider
                 MoonShineUserResource::class,
                 MoonShineUserRoleResource::class,
                 CallResource::class,
+                OrderResource::class,
             ])
             ->pages([
                 ...$config->getPages(),
+                OrderMergePage::class,
+                OrderMergePageV2::class,
             ])
         ;
     }

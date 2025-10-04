@@ -31,6 +31,9 @@ use MoonShine\UI\Components\{Breadcrumbs,
     Layout\Wrapper,
     When};
 use App\MoonShine\Resources\CallResource;
+use App\MoonShine\Resources\OrderResource;
+use App\MoonShine\Pages\OrderMergePage;
+use App\MoonShine\Pages\OrderMergePageV2;
 use MoonShine\MenuManager\MenuItem;
 
 final class MoonShineLayout extends AppLayout
@@ -47,6 +50,9 @@ final class MoonShineLayout extends AppLayout
         return [
             ...parent::menu(),
             MenuItem::make('Звонки', CallResource::class),
+            MenuItem::make('Заказы', OrderResource::class),
+            MenuItem::make('Объединение заказов', OrderMergePage::class),
+            MenuItem::make('Объединение заказов V2', OrderMergePageV2::class),
         ];
     }
 

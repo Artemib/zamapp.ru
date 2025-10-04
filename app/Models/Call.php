@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CallConstants;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Call extends Model
 {
@@ -79,6 +80,14 @@ class Call extends Model
         }
         
         return format_date_custom($this->datetime, true, 'd MMM HH:mm');
+    }
+
+    /**
+     * Заказы, связанные с этим звонком
+     */
+    public function orders(): BelongsToMany
+    {
+        return $this->belongsToMany(Order::class, 'order_calls');
     }
 
 }
