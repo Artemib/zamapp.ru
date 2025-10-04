@@ -9,6 +9,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Список всех звонков
      */
     public function up(): void
     {
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->string('link_record_crm')->nullable(); // Ссылка на запись разговора на стороне CRM
             $table->text('transcribation')->nullable(); // Расшифровка разговора аудио в текст
             $table->string('from_source_name'); // Название источника откуда пришёл звонок в CRM
+//            $table->string('call_tag_id'); // Нужно как то отмечать звонки подумаем ещё
             $table->timestamps(); // Дата и время создания записи о звонке в CRM
         });
     }

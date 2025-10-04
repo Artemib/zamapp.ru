@@ -33,6 +33,24 @@ class Call extends Model
         'datetime_formatted',
     ];
 
+    /**
+     * Связь: звонок может быть "главным" в одном заказе.
+     */
+    public function mainOrder(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Order::class, 'main_call_id');
+    }
+
+    /**
+     * Связь: звонок может быть связан с несколькими заказами (история).
+     */
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'call_order')
+            ->withPivot('relation_type')
+            ->withTimestamps();
+    }
+
 
     public function getStatusNameAttribute(): string
     {
