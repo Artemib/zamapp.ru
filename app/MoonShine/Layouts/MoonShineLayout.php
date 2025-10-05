@@ -31,6 +31,9 @@ use MoonShine\UI\Components\{Breadcrumbs,
     Layout\Wrapper,
     When};
 use App\MoonShine\Resources\CallResource;
+use App\MoonShine\Resources\ContactResource;
+use App\MoonShine\Resources\OrderResource;
+use App\MoonShine\Pages\Dashboard;
 use MoonShine\MenuManager\MenuItem;
 
 final class MoonShineLayout extends AppLayout
@@ -45,8 +48,11 @@ final class MoonShineLayout extends AppLayout
     protected function menu(): array
     {
         return [
+            MenuItem::make('Дашборд', Dashboard::class)->icon('chart-bar'),
+            MenuItem::make('Звонки', CallResource::class)->icon('phone'),
+            MenuItem::make('Контакты', ContactResource::class)->icon('users'),
+            MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
             ...parent::menu(),
-            MenuItem::make('Звонки', CallResource::class),
         ];
     }
 

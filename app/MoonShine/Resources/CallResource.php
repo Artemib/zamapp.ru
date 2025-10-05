@@ -6,7 +6,6 @@ namespace App\MoonShine\Resources;
 
 
 use App\Models\Call;
-
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\Support\Enums\Color;
 use MoonShine\UI\Components\Layout\Box;
@@ -14,7 +13,14 @@ use MoonShine\UI\Fields\ID;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\UI\Fields\Text;
+use MoonShine\UI\Fields\Select;
+use MoonShine\UI\Fields\Textarea;
+use MoonShine\Support\Attributes\Icon;
+use MoonShine\MenuManager\Attributes\Group;
+use MoonShine\MenuManager\Attributes\Order as MenuOrder;
 
+#[Icon('phone')]
+#[Group('')]
 /**
  * @extends ModelResource<Call>
  */
@@ -23,6 +29,33 @@ class CallResource extends ModelResource
     protected string $model = Call::class;
 
     protected string $title = 'Звонки';
+
+    /**
+     * @return list<\MoonShine\Contracts\UI\FieldContract>
+     */
+    protected function filters(): iterable
+    {
+        return [
+            Select::make('Статус звонка', 'status')
+                ->options([
+                    'success' => 'Успешный',
+                    'missed' => 'Пропущенный',
+                    'cancel' => 'Отменённый',
+                    'busy' => 'Занято',
+                    'not_available' => 'Недоступен',
+                    'not_allowed' => 'Запрещено',
+                    'not_found' => 'Не найден',
+                ])
+                ->nullable(),
+            
+            Select::make('Тип звонка', 'type')
+                ->options([
+                    'in' => 'Входящий',
+                    'out' => 'Исходящий',
+                ])
+                ->nullable(),
+        ];
+    }
     
     /**
      * @return list<FieldContract>
@@ -63,7 +96,61 @@ class CallResource extends ModelResource
         return [
             Box::make([
                 ID::make(),
-            ])
+                
+                Text::make('ID звонка в ВАТС', 'callid')
+                    ->required()
+                    ->readonly(),
+
+                Text::make('Дата и время', 'datetime')
+                    ->required(),
+
+                Select::make('Тип', 'type')
+                    ->options([
+                        'in' => 'Входящий',
+                        'out' => 'Исходящий',
+                    ])
+                    ->required(),
+
+                Select::make('Статус', 'status')
+                    ->options([
+                        'success' => 'Успешный',
+                        'missed' => 'Пропущенный',
+                        'cancel' => 'Отменённый',
+                        'busy' => 'Занято',
+                        'not_available' => 'Недоступен',
+                        'not_allowed' => 'Запрещено',
+                        'not_found' => 'Не найден',
+                    ])
+                    ->required(),
+
+                Text::make('Телефон клиента', 'client_phone')
+                    ->required(),
+
+                Text::make('Пользователь ВАТС', 'user_pbx')
+                    ->required(),
+
+                Text::make('Рекламный номер', 'diversion_phone')
+                    ->required(),
+
+                Text::make('Длительность (сек)', 'duration')
+                    ->required(),
+
+                Text::make('Время ожидания (сек)', 'wait')
+                    ->required(),
+
+                Text::make('Ссылка на запись (ВАТС)', 'link_record_pbx')
+                    ->nullable(),
+
+                Text::make('Ссылка на запись (CRM)', 'link_record_crm')
+                    ->nullable(),
+
+                Text::make('Источник', 'from_source_name')
+                    ->required(),
+            ]),
+
+            Box::make('Расшифровка', [
+                Textarea::make('Транскрипция', 'transcribation'),
+            ]),
         ];
     }
 
