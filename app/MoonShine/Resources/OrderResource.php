@@ -62,11 +62,9 @@ class OrderResource extends ModelResource
             Text::make('Статус', 'status')
                 ->badge(function ($value) {
                     return match ($value) {
-                        'work' => Color::BLUE,
-                        'completed' => Color::GREEN,
+                        'work' => Color::YELLOW,
+                        'success' => Color::GREEN,
                         'cancelled' => Color::RED,
-                        'pending' => Color::YELLOW,
-                        default => Color::GRAY,
                     };
                 }),
             Text::make('Главный звонок', 'mainCall.client_phone')
@@ -89,9 +87,8 @@ class OrderResource extends ModelResource
                 Select::make('Статус', 'status')
                     ->options([
                         'work' => 'В работе',
-                        'completed' => 'Завершен',
+                        'success' => 'Выполнен',
                         'cancelled' => 'Отменен',
-                        'pending' => 'Ожидает',
                     ])
                     ->required(),
 

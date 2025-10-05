@@ -99,4 +99,13 @@ class Call extends Model
         return format_date_custom($this->datetime, true, 'd MMM HH:mm');
     }
 
+    public function getTimeFormattedAttribute(): ?string
+    {
+        if (empty($this->datetime)) {
+            return null;
+        }
+        
+        return format_date_custom($this->datetime, true, 'HH:mm');
+    }
+
 }

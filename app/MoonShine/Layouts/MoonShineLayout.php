@@ -35,6 +35,8 @@ use App\MoonShine\Resources\ContactResource;
 use App\MoonShine\Resources\OrderResource;
 use App\MoonShine\Pages\Dashboard;
 use MoonShine\MenuManager\MenuItem;
+use App\MoonShine\Pages\Calls;
+
 
 final class MoonShineLayout extends AppLayout
 {
@@ -50,6 +52,7 @@ final class MoonShineLayout extends AppLayout
         return [
             MenuItem::make('Дашборд', Dashboard::class)->icon('chart-bar'),
             MenuItem::make('Звонки', CallResource::class)->icon('phone'),
+            MenuItem::make('Звонки2', Calls::class)->icon('phone'),
             MenuItem::make('Контакты', ContactResource::class)->icon('users'),
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
             ...parent::menu(),

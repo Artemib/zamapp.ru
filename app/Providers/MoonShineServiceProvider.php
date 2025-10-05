@@ -15,6 +15,7 @@ use App\MoonShine\Resources\CallResource;
 use App\MoonShine\Resources\ContactResource;
 use App\MoonShine\Resources\OrderResource;
 use App\MoonShine\Pages\Dashboard;
+use App\MoonShine\Pages\Calls;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -36,7 +37,9 @@ class MoonShineServiceProvider extends ServiceProvider
             ->pages([
                 Dashboard::class,
                 ...$config->getPages(),
+                Calls::class,
             ])
         ;
     }
 }
+

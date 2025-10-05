@@ -8,16 +8,20 @@ namespace App\MoonShine\Resources;
 use App\Models\Call;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\Support\Enums\Color;
-use MoonShine\UI\Components\Layout\Box;
-use MoonShine\UI\Fields\ID;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Select;
-use MoonShine\UI\Fields\Textarea;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order as MenuOrder;
+use MoonShine\Laravel\QueryTags\QueryTag;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+use MoonShine\Support\ListOf;
+use MoonShine\Laravel\Enums\Action;
+use MoonShine\UI\Components\ActionButton;
+use App\Enums\CallConstants;
+
+
 
 #[Icon('phone')]
 #[Group('')]
@@ -30,6 +34,45 @@ class CallResource extends ModelResource
 
     protected string $title = 'Звонки';
 
+    protected function modifyQueryBuilder(Builder $builder): Builder
+    {
+        /** @var \Illuminate\Database\Eloquent\Builder $builder */
+        // Получаем московское время и конвертируем в UTC для сравнения с БД
+        $moscowTodayStart = now('Europe/Moscow')->startOfDay()->utc();
+        $moscowNow = now('Europe/Moscow')->utc();
+
+        return $builder
+            ->where('datetime', '>=', $moscowTodayStart)
+            ->where('datetime', '<=', $moscowNow);
+    }
+    protected function activeActions(): ListOf
+    {
+        return parent::activeActions()
+            ->only();
+    }
+
+    protected function topButtons(): ListOf
+    {
+        $now = 'Переуд '. format_date_custom(now(), true, 'd MMM yyyy') . ' - ' . format_date_custom(now(), true, 'd MMM yyyy'); 
+
+
+        return parent::topButtons()->add(
+            ActionButton::make($now, '#')->icon('calendar-days'),
+            // ActionButton::make('Refresh 2', '#'),
+        );
+    }
+
+    protected function indexButtons(): ListOf
+    {
+        return parent::indexButtons()
+            ->prepend(
+                ActionButton::make('',fn(Call $item) => '/endpoint?id=' . $item->link_record_pbx)->icon('play'),
+                // ActionButton::make('Button 2', '/')
+                //     ->showInDropdown(),
+        );
+    }
+
+
     /**
      * @return list<\MoonShine\Contracts\UI\FieldContract>
      */
@@ -37,24 +80,41 @@ class CallResource extends ModelResource
     {
         return [
             Select::make('Статус звонка', 'status')
-                ->options([
-                    'success' => 'Успешный',
-                    'missed' => 'Пропущенный',
-                    'cancel' => 'Отменённый',
-                    'busy' => 'Занято',
-                    'not_available' => 'Недоступен',
-                    'not_allowed' => 'Запрещено',
-                    'not_found' => 'Не найден',
-                ])
+                ->options(CallConstants::STATUSES)
+                ->placeholder('Все')
                 ->nullable(),
             
             Select::make('Тип звонка', 'type')
-                ->options([
-                    'in' => 'Входящий',
-                    'out' => 'Исходящий',
-                ])
+                ->options(CallConstants::TYPES)
+                ->placeholder('Все')
                 ->nullable(),
         ];
+    }
+
+    protected function queryTags(): array
+    {
+        $all = Call::count();
+        $missed = Call::where('status', 'missed')->count();
+        $in = Call::where('type', 'in')->count();
+        $out = Call::where('type', 'out')->count();
+
+
+        $result = [];
+
+        if($all > 0) {
+            $result[] = QueryTag::make('Все ' . $all, fn ($q) => $q)->default();
+        }
+
+        $result[] = QueryTag::make('Входящие ' . $in, fn ($q) => $q->where('type', 'in'))->icon('arrow-down-right');
+
+        if($missed > 0) {
+            $result[] = QueryTag::make('Пропущенные ' . $missed, fn ($q) => $q->where('status', 'missed'))->icon('x-mark');
+        }
+
+        $result[] = QueryTag::make('Исходящие ' . $out, fn ($q) => $q->where('type', 'out'))->icon('arrow-up-left');
+
+
+        return $result;
     }
     
     /**
@@ -63,12 +123,13 @@ class CallResource extends ModelResource
     protected function indexFields(): iterable
     {
         return [
-//            ID::make()->sortable(),
-            Text::make('Дата и время', 'datetime_formatted'),
+            Text::make('Дата', 'datetime_formatted'),
+            Text::make('Время', 'time_formatted'),
             Text::make('Тип', 'type_name'),
             Text::make('Телефон клиента', 'client_phone_name'),
             Text::make('Рекламный', 'diversion_phone_name'),
-            Text::make('Пользователь ВАТС', 'user_pbx'),
+            Text::make('Ожидание', 'wait'),
+            Text::make('Длительность', 'duration'),
             Text::make('Статус', 'status_name')
                 ->badge(function ($value) {
                     // Делаем match с русскими названиями статусов
@@ -79,8 +140,7 @@ class CallResource extends ModelResource
                         'Занято' => Color::YELLOW,
                         'Недоступен' => Color::PURPLE,
                         'Запрещено' => Color::RED,
-                        'Не найден' => Color::GRAY,
-                        default => Color::GRAY,
+                        'Не найден' => Color::GRAY
                     };
                 }),
             // Text::make('Запись Разговора', 'link_record_crm')->badge(Color::RED),
@@ -93,65 +153,7 @@ class CallResource extends ModelResource
      */
     protected function formFields(): iterable
     {
-        return [
-            Box::make([
-                ID::make(),
-                
-                Text::make('ID звонка в ВАТС', 'callid')
-                    ->required()
-                    ->readonly(),
-
-                Text::make('Дата и время', 'datetime')
-                    ->required(),
-
-                Select::make('Тип', 'type')
-                    ->options([
-                        'in' => 'Входящий',
-                        'out' => 'Исходящий',
-                    ])
-                    ->required(),
-
-                Select::make('Статус', 'status')
-                    ->options([
-                        'success' => 'Успешный',
-                        'missed' => 'Пропущенный',
-                        'cancel' => 'Отменённый',
-                        'busy' => 'Занято',
-                        'not_available' => 'Недоступен',
-                        'not_allowed' => 'Запрещено',
-                        'not_found' => 'Не найден',
-                    ])
-                    ->required(),
-
-                Text::make('Телефон клиента', 'client_phone')
-                    ->required(),
-
-                Text::make('Пользователь ВАТС', 'user_pbx')
-                    ->required(),
-
-                Text::make('Рекламный номер', 'diversion_phone')
-                    ->required(),
-
-                Text::make('Длительность (сек)', 'duration')
-                    ->required(),
-
-                Text::make('Время ожидания (сек)', 'wait')
-                    ->required(),
-
-                Text::make('Ссылка на запись (ВАТС)', 'link_record_pbx')
-                    ->nullable(),
-
-                Text::make('Ссылка на запись (CRM)', 'link_record_crm')
-                    ->nullable(),
-
-                Text::make('Источник', 'from_source_name')
-                    ->required(),
-            ]),
-
-            Box::make('Расшифровка', [
-                Textarea::make('Транскрипция', 'transcribation'),
-            ]),
-        ];
+        return [];
     }
 
     /**
@@ -159,14 +161,7 @@ class CallResource extends ModelResource
      */
     protected function detailFields(): iterable
     {
-        return [
-            Text::make('Дата и время', 'datetime_formatted'),
-            Text::make('Тип', 'type_name'),
-            Text::make('Телефон клиента', 'client_phone_name'),
-            Text::make('Рекламный', 'diversion_phone_name'),
-            Text::make('Статус', 'status_name'),
-            Text::make('Запись Разговора', 'link_record_crm'),
-        ];
+        return [];
     }
 
     /**
