@@ -36,9 +36,13 @@ use App\MoonShine\Resources\OrderResource;
 use App\MoonShine\Pages\Dashboard;
 use MoonShine\MenuManager\MenuItem;
 use App\MoonShine\Pages\Calls;
+use MoonShine\Laravel\Layouts\CompactLayout;
+use MoonShine\MenuManager\MenuGroup;
+use App\MoonShine\Resources\MoonShineUserResource;
+use App\MoonShine\Resources\MoonShineUserRoleResource;
 
 
-final class MoonShineLayout extends AppLayout
+final class MoonShineLayout extends CompactLayout
 {
     protected function assets(): array
     {
@@ -55,7 +59,18 @@ final class MoonShineLayout extends AppLayout
             MenuItem::make('Звонки2', Calls::class)->icon('phone'),
             MenuItem::make('Контакты', ContactResource::class)->icon('users'),
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
-            ...parent::menu(),
+
+            MenuGroup::make(static fn () => __('moonshine::ui.resource.system'), [
+                MenuItem::make(
+                    static fn () => __('moonshine::ui.resource.admins_title'),
+                    MoonShineUserResource::class
+                ),
+                MenuItem::make(
+                    static fn () => __('moonshine::ui.resource.role_title'),
+                    MoonShineUserRoleResource::class
+                ),
+            ])->icon('cog')->style("margin-top: auto"),
+            // ...parent::menu(),
         ];
     }
 

@@ -24,6 +24,10 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order as MenuOrder;
 
+use MoonShine\UI\Components\CardsBuilder;
+use MoonShine\Support\Enums\JsEvent;
+use MoonShine\Support\AlpineJs;
+
 #[Icon('shopping-cart')]
 #[Group('')]
 /**
@@ -34,6 +38,30 @@ class OrderResource extends ModelResource
     protected string $model = Order::class;
 
     protected string $title = 'Заказы';
+
+
+    public function getListEventName(?string $name = null, array $params = []): string
+    {
+        $name ??= $this->getListComponentName();
+ 
+        return AlpineJs::event(JsEvent::CARDS_UPDATED, $name, $params);
+    }
+ 
+    public function modifyListComponent(ComponentContract $component): ComponentContract
+    {
+        return CardsBuilder::make($this->getItems(), $this->getIndexFields())
+            ->cast($this->getCaster())
+            ->name($this->getListComponentName())
+            ->async()
+            ->overlay()
+            ->title('email')
+            ->subtitle('name')
+            ->url(fn ($user) => $this->getFormPageUrl($user->getKey()))
+            // ->thumbnail(fn ($user) => asset($user->avatar))
+            ->buttons($this->getIndexButtons());
+    }
+
+
 
     /**
      * @return list<\MoonShine\Contracts\UI\FieldContract>
