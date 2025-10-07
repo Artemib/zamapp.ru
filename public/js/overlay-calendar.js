@@ -1,5 +1,5 @@
 // Overlay Calendar Alpine.js Component
-function overlayCalendar(placeholder = 'Выберите дату') {
+function overlayCalendar() {
     return {
         isOpen: false,
         currentDate: new Date(),
@@ -7,7 +7,45 @@ function overlayCalendar(placeholder = 'Выберите дату') {
         selectedEndDate: null,
         selectedValue: '',
         selectedPeriod: null,
-        placeholder: placeholder,
+        
+        // Снапшот конфигурации на момент инициализации
+        config: null,
+        readConfig() {
+            const element = this.$el;
+            const sqp = element.dataset.showQuickPeriods;
+            const ssp = element.dataset.showSelectedPeriod;
+            const smn = element.dataset.showMonthNames;
+            return {
+                placeholder: element.dataset.placeholder || 'Выберите дату',
+                showQuickPeriods: sqp === undefined ? true : sqp === 'true',
+                quickPeriods: element.dataset.quickPeriods ? element.dataset.quickPeriods.split(',') : ['today', 'yesterday', 'current_week', 'last_week', 'current_month', 'last_month'],
+                primaryColor: element.dataset.primaryColor || '#3b82f6',
+                rangeColor: element.dataset.rangeColor || '#10b981',
+                showSelectedPeriod: ssp === undefined ? true : ssp === 'true',
+                showMonthNames: smn === undefined ? true : smn === 'true'
+            };
+        },
+        
+        init() {
+            // Снимаем конфигурацию один раз на экземпляр
+            this.config = this.readConfig();
+            // Переводы из data-атрибутов (JSON)
+            const el = this.$el;
+            try {
+                if (el.dataset.weekdays) {
+                    this.weekDays = JSON.parse(el.dataset.weekdays);
+                }
+                if (el.dataset.months) {
+                    this.monthNames = JSON.parse(el.dataset.months);
+                }
+                if (el.dataset.labels) {
+                    this.config.labels = JSON.parse(el.dataset.labels);
+                }
+            } catch (e) { /* ignore */ }
+            if (!this.weekDays) this.weekDays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+            if (!this.monthNames) this.monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            // Цвета задаются инлайн стилями у корня
+        },
         
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
         monthNames: [
@@ -24,11 +62,15 @@ function overlayCalendar(placeholder = 'Выберите дату') {
             } else if (this.selectedStartDate) {
                 return this.formatDate(this.selectedStartDate);
             }
-            return this.placeholder;
+            return this.config.placeholder;
         },
         
         get currentMonthYear() {
-            return this.monthNames[this.currentDate.getMonth()] + ' ' + this.currentDate.getFullYear();
+            if (this.config.showMonthNames) {
+                return this.monthNames[this.currentDate.getMonth()] + ' ' + this.currentDate.getFullYear();
+            } else {
+                return (this.currentDate.getMonth() + 1) + '.' + this.currentDate.getFullYear();
+            }
         },
         
         get hasSelection() {
@@ -115,19 +157,25 @@ function overlayCalendar(placeholder = 'Выберите дату') {
         
         toggleBodyScroll() {
             if (this.isOpen) {
+                // Сохраняем текущую позицию, фиксируем body и компенсируем top
+                this._scrollY = window.scrollY || document.documentElement.scrollTop || 0;
                 document.body.classList.add('calendar-open');
-                // Предотвращаем скролл на мобильных
-                document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
+                document.body.style.top = `-${this._scrollY}px`;
+                document.body.style.left = '0';
+                document.body.style.right = '0';
                 document.body.style.width = '100%';
-                document.body.style.height = '100%';
             } else {
                 document.body.classList.remove('calendar-open');
-                // Восстанавливаем скролл
-                document.body.style.overflow = '';
+                const y = this._scrollY || 0;
+                // Сбрасываем стили до возврата
                 document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
                 document.body.style.width = '';
-                document.body.style.height = '';
+                // Возвращаем прокрутку туда, где была
+                window.scrollTo(0, y);
             }
         },
         
@@ -195,7 +243,7 @@ function overlayCalendar(placeholder = 'Выберите дату') {
                     this.currentDate = new Date(yesterday);
                     break;
                     
-                case 'currentWeek':
+                case 'current_week':
                     const startOfWeek = new Date(today);
                     const dayOfWeek = today.getDay();
                     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -207,7 +255,7 @@ function overlayCalendar(placeholder = 'Выберите дату') {
                     this.currentDate = new Date(startOfWeek);
                     break;
                     
-                case 'lastWeek':
+                case 'last_week':
                     const lastWeekStart = new Date(today);
                     const lastWeekDayOfWeek = today.getDay();
                     const lastWeekMondayOffset = lastWeekDayOfWeek === 0 ? 6 : lastWeekDayOfWeek - 1;
@@ -219,7 +267,7 @@ function overlayCalendar(placeholder = 'Выберите дату') {
                     this.currentDate = new Date(lastWeekStart);
                     break;
                     
-                case 'currentMonth':
+                case 'current_month':
                     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                     this.selectedStartDate = startOfMonth;
@@ -228,7 +276,7 @@ function overlayCalendar(placeholder = 'Выберите дату') {
                     this.currentDate = new Date(today);
                     break;
                     
-                case 'lastMonth':
+                case 'last_month':
                     const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
                     this.selectedStartDate = startOfLastMonth;
@@ -273,7 +321,7 @@ function overlayCalendar(placeholder = 'Выберите дату') {
                 if (start === end) {
                     return start;
                 }
-                return 'С ' + start + ' по ' + end;
+                return start + ' — ' + end;
             } else if (this.selectedStartDate) {
                 // Показываем только одну дату
                 return this.formatDate(this.selectedStartDate);
@@ -300,6 +348,18 @@ function overlayCalendar(placeholder = 'Выберите дату') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             return this.isSameDay(date, today);
+        },
+        
+        getPeriodLabel(period) {
+            const labels = (this.config && this.config.labels) ? this.config.labels : {
+                'today': 'Сегодня',
+                'yesterday': 'Вчера',
+                'current_week': 'Текущая неделя',
+                'last_week': 'Прошлая неделя',
+                'current_month': 'Текущий месяц',
+                'last_month': 'Прошлый месяц'
+            };
+            return labels[period] || period;
         },
         
         isSameDay(date1, date2) {

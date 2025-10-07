@@ -1,4 +1,60 @@
 /* Overlay Calendar Styles */
+:root {
+    /* Базовые цвета календаря */
+    --calendar-primary-color: #3b82f6;
+    --calendar-range-color: #10b981;
+    --calendar-inrange-color: #d1fae5;
+    --calendar-inrange-text-color: #065f46;
+    --calendar-quick-active-bg: #10b981;
+    --calendar-quick-active-text: #ffffff;
+    --calendar-apply-bg: #8b5cf6;
+    --calendar-apply-text: #ffffff;
+}
+
+/* Тёмная тема (MoonShine включает класс .dark на html/body) */
+.dark .calendar-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.dark .calendar-overlay-content {
+    background: #0f172a; /* slate-900 */
+}
+
+.dark .calendar-sidebar {
+    background: #0b1220; /* приближено к sidebar темному */
+    border-color: #334155; /* slate-700 */
+}
+
+.dark .sidebar-title,
+.dark .calendar-text,
+.dark .calendar-month-year,
+.dark .calendar-weekday {
+    color: #e5e7eb; /* zinc-200 */
+}
+
+.dark .calendar-nav-btn { color: #94a3b8; }
+.dark .calendar-nav-btn:hover { background-color: #1f2937; }
+
+.dark .period-option { color: #cbd5e1; }
+.dark .period-option:hover { background: #1f2937; color: #e5e7eb; }
+
+/* Активные и выбранные состояния в темной теме используют заданные CSS переменные */
+.dark .calendar-day.today { background-color: #1e293b; color: #60a5fa; }
+.dark .calendar-day.normal-day { color: #e5e7eb; }
+.dark .calendar-day.normal-day:hover { background-color: #1f2937; }
+
+.dark .calendar-btn-secondary { background-color: #1f2937; color: #e5e7eb; }
+.dark .calendar-btn-secondary:hover { background-color: #111827; }
+.dark .calendar-actions { background: #0f172a; border-top: 1px solid #1f2937; }
+.dark .selected-period { color: #e5e7eb; }
+
+/* Тёмная тема: дефолт контрастных цветов для диапазона между датами */
+.dark {
+    --calendar-inrange-color: #bfeee0; /* чуть темнее фон для лучшего контраста */
+    --calendar-inrange-text-color: #0b1220; /* тёмный текст на светлом фоне */
+}
+
+/* Состояния, завязанные на переменные, автоматически унаследуют цвета */
 .calendar-trigger {
     border: 1px solid #d1d5db;
     border-radius: 6px;
@@ -22,6 +78,7 @@
 .calendar-text {
     color: #374151;
 }
+.dark .calendar-text { color: #111827; }
 
 .calendar-icon {
     color: #6b7280;
@@ -46,10 +103,10 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 800px;
+    max-width: var(--calendar-max-width, 800px);
     width: 100%;
-    max-height: 90vh;
-    overflow: hidden;
+    max-height: var(--calendar-max-height, 90vh);
+    overflow: auto;
     display: flex;
 }
 
@@ -122,8 +179,8 @@
 }
 
 .period-option.active {
-    background: #10b981;
-    color: white;
+    background: var(--calendar-quick-active-bg, #10b981);
+    color: var(--calendar-quick-active-text, #ffffff);
 }
 
 .check-icon {
@@ -218,30 +275,30 @@
 }
 
 .calendar-day.selected {
-    background-color: #3b82f6 !important;
+    background-color: var(--calendar-primary-color) !important;
     color: white !important;
     font-weight: 600;
 }
 
 .calendar-day.selected:hover {
-    background-color: #3b82f6 !important;
+    background-color: var(--calendar-primary-color) !important;
     color: white !important;
 }
 
 .calendar-day.range-start-end {
-    background-color: #10b981 !important;
+    background-color: var(--calendar-range-color) !important;
     color: white !important;
     font-weight: 600;
 }
 
 .calendar-day.range-start-end:hover {
-    background-color: #10b981 !important;
+    background-color: var(--calendar-range-color) !important;
     color: white !important;
 }
 
 .calendar-day.in-range {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: var(--calendar-inrange-color, #d1fae5);
+    color: var(--calendar-inrange-text-color, #065f46) !important;
 }
 
 .calendar-day.weekend {
@@ -282,8 +339,8 @@
 }
 
 .calendar-btn-primary {
-    background-color: #8b5cf6;
-    color: white;
+    background-color: var(--calendar-apply-bg, #8b5cf6);
+    color: var(--calendar-apply-text, #ffffff);
 }
 
 .calendar-btn-primary:hover {
@@ -316,6 +373,10 @@
     .calendar-overlay-content {
         flex-direction: column;
         max-width: 95vw;
+    }
+    .calendar-header { /* не перекрывать стрелки мобильным крестиком */
+        position: relative;
+        padding-right: 44px;
     }
     
     .calendar-sidebar {
@@ -375,6 +436,18 @@
 
 /* Десктопная версия */
 @media (min-width: 769px) {
+    .calendar-overlay-content {
+        overflow: auto;
+    }
+
+    .calendar-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        align-self: stretch;
+    }
     .period-selector {
         display: none;
     }

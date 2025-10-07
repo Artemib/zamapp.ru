@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест кастомизации календаря</title>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="/css/overlay-calendar.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .demo-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест кастомизации календаря</h1>
+    
+    <!-- 1. Стандартный календарь -->
+    <div class="demo-section">
+        <h2>1. Стандартный календарь</h2>
+        <p class="description">Все функции включены по умолчанию</p>
+        <div x-data="overlayCalendar()" 
+             data-placeholder="Стандартный календарь"
+             data-show-quick-periods="true"
+             data-quick-periods="today,yesterday,current_week,last_week,current_month,last_month"
+             data-primary-color="#3b82f6"
+             data-range-color="#10b981"
+             data-show-selected-period="true"
+             data-show-month-names="true">
+            <button @click="toggleCalendar()" class="calendar-trigger">
+                <span x-text="displayText"></span>
+            </button>
+            
+            <!-- Overlay -->
+            <div x-show="isOpen" class="calendar-overlay" @click="closeCalendar()" @keydown.escape.window="closeCalendar()" @touchmove.prevent @touchstart.prevent>
+                <div class="calendar-overlay-content" @click.stop @touchmove.stop @touchstart.stop>
+                    <!-- Боковая панель с быстрыми периодами -->
+                    <div class="calendar-sidebar" x-show="config.showQuickPeriods">
+                        <div class="sidebar-header">
+                            <h4 class="sidebar-title">Быстрый выбор</h4>
+                            <button type="button" @click="closeCalendar()" class="close-btn close-btn-mobile">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Мобильный селект -->
+                        <select x-model="selectedPeriod" @change="selectQuickPeriod(selectedPeriod)" class="period-selector">
+                            <option value="">Выберите период</option>
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <option :value="period" x-text="getPeriodLabel(period)"></option>
+                            </template>
+                        </select>
+                        
+                        <!-- Десктопные кнопки -->
+                        <div class="period-options">
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <div class="period-option" 
+                                     :class="{ 'active': selectedPeriod === period }"
+                                     @click="selectQuickPeriod(period)" x-text="getPeriodLabel(period)">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Основной календарь -->
+                    <div class="calendar-main">
+                        <!-- Заголовок календаря -->
+                        <div class="calendar-header">
+                            <button type="button" @click="previousMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15,18 9,12 15,6"></polyline>
+                                </svg>
+                            </button>
+                            <h3 class="calendar-month-year" x-text="currentMonthYear"></h3>
+                            <button type="button" @click="nextMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9,18 15,12 9,6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Дни недели -->
+                        <div class="calendar-weekdays">
+                            <template x-for="day in weekDays" :key="day">
+                                <div class="calendar-weekday" x-text="day"></div>
+                            </template>
+                        </div>
+
+                        <!-- Дни календаря -->
+                        <div class="calendar-days">
+                            <template x-for="day in calendarDays" :key="day.date">
+                                <div class="calendar-day"
+                                     :class="day.classes"
+                                     @click="selectDate(day)"
+                                     x-text="day.day">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Выбранный период -->
+                    <div class="selected-period desktop-only" x-show="config.showSelectedPeriod">
+                        <span x-text="getSelectedPeriodText()"></span>
+                    </div>
+                        
+                    <!-- Кнопки действий -->
+                    <div class="calendar-actions">
+                        <button type="button" @click="clearSelection()" class="calendar-btn calendar-btn-secondary" :disabled="!hasSelection">
+                            Очистить
+                        </button>
+                        <button type="button" @click="applySelection()" class="calendar-btn calendar-btn-primary" :disabled="!hasSelection">
+                            Применить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Календарь без быстрых периодов -->
+    <div class="demo-section">
+        <h2>2. Календарь без быстрых периодов</h2>
+        <p class="description">Отключены быстрые периоды, только календарь</p>
+        <div x-data="overlayCalendar()" 
+             data-placeholder="Без быстрых периодов"
+             data-show-quick-periods="false"
+             data-primary-color="#3b82f6"
+             data-range-color="#10b981"
+             data-show-selected-period="true"
+             data-show-month-names="true">
+            <button @click="toggleCalendar()" class="calendar-trigger">
+                <span x-text="displayText"></span>
+            </button>
+            
+            <!-- Overlay -->
+            <div x-show="isOpen" class="calendar-overlay" @click="closeCalendar()" @keydown.escape.window="closeCalendar()" @touchmove.prevent @touchstart.prevent>
+                <div class="calendar-overlay-content" @click.stop @touchmove.stop @touchstart.stop>
+                    <!-- Боковая панель с быстрыми периодами -->
+                    <div class="calendar-sidebar" x-show="config.showQuickPeriods">
+                        <div class="sidebar-header">
+                            <h4 class="sidebar-title">Быстрый выбор</h4>
+                            <button type="button" @click="closeCalendar()" class="close-btn close-btn-mobile">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Мобильный селект -->
+                        <select x-model="selectedPeriod" @change="selectQuickPeriod(selectedPeriod)" class="period-selector">
+                            <option value="">Выберите период</option>
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <option :value="period" x-text="getPeriodLabel(period)"></option>
+                            </template>
+                        </select>
+                        
+                        <!-- Десктопные кнопки -->
+                        <div class="period-options">
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <div class="period-option" 
+                                     :class="{ 'active': selectedPeriod === period }"
+                                     @click="selectQuickPeriod(period)" x-text="getPeriodLabel(period)">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Основной календарь -->
+                    <div class="calendar-main">
+                        <!-- Заголовок календаря -->
+                        <div class="calendar-header">
+                            <button type="button" @click="previousMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15,18 9,12 15,6"></polyline>
+                                </svg>
+                            </button>
+                            <h3 class="calendar-month-year" x-text="currentMonthYear"></h3>
+                            <button type="button" @click="nextMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9,18 15,12 9,6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Дни недели -->
+                        <div class="calendar-weekdays">
+                            <template x-for="day in weekDays" :key="day">
+                                <div class="calendar-weekday" x-text="day"></div>
+                            </template>
+                        </div>
+
+                        <!-- Дни календаря -->
+                        <div class="calendar-days">
+                            <template x-for="day in calendarDays" :key="day.date">
+                                <div class="calendar-day"
+                                     :class="day.classes"
+                                     @click="selectDate(day)"
+                                     x-text="day.day">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Выбранный период -->
+                    <div class="selected-period desktop-only" x-show="config.showSelectedPeriod">
+                        <span x-text="getSelectedPeriodText()"></span>
+                    </div>
+                        
+                    <!-- Кнопки действий -->
+                    <div class="calendar-actions">
+                        <button type="button" @click="clearSelection()" class="calendar-btn calendar-btn-secondary" :disabled="!hasSelection">
+                            Очистить
+                        </button>
+                        <button type="button" @click="applySelection()" class="calendar-btn calendar-btn-primary" :disabled="!hasSelection">
+                            Применить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Кастомные цвета -->
+    <div class="demo-section">
+        <h2>3. Кастомные цвета</h2>
+        <p class="description">Фиолетовый для одиночных дат, оранжевый для диапазонов</p>
+        <div x-data="overlayCalendar()" 
+             data-placeholder="Кастомные цвета"
+             data-show-quick-periods="true"
+             data-quick-periods="today,yesterday,current_month"
+             data-primary-color="#8b5cf6"
+             data-range-color="#f59e0b"
+             data-show-selected-period="true"
+             data-show-month-names="true">
+            <button @click="toggleCalendar()" class="calendar-trigger">
+                <span x-text="displayText"></span>
+            </button>
+            
+            <!-- Overlay -->
+            <div x-show="isOpen" class="calendar-overlay" @click="closeCalendar()" @keydown.escape.window="closeCalendar()" @touchmove.prevent @touchstart.prevent>
+                <div class="calendar-overlay-content" @click.stop @touchmove.stop @touchstart.stop>
+                    <!-- Боковая панель с быстрыми периодами -->
+                    <div class="calendar-sidebar" x-show="config.showQuickPeriods">
+                        <div class="sidebar-header">
+                            <h4 class="sidebar-title">Быстрый выбор</h4>
+                            <button type="button" @click="closeCalendar()" class="close-btn close-btn-mobile">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Мобильный селект -->
+                        <select x-model="selectedPeriod" @change="selectQuickPeriod(selectedPeriod)" class="period-selector">
+                            <option value="">Выберите период</option>
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <option :value="period" x-text="getPeriodLabel(period)"></option>
+                            </template>
+                        </select>
+                        
+                        <!-- Десктопные кнопки -->
+                        <div class="period-options">
+                            <template x-for="period in config.quickPeriods" :key="period">
+                                <div class="period-option" 
+                                     :class="{ 'active': selectedPeriod === period }"
+                                     @click="selectQuickPeriod(period)" x-text="getPeriodLabel(period)">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Основной календарь -->
+                    <div class="calendar-main">
+                        <!-- Заголовок календаря -->
+                        <div class="calendar-header">
+                            <button type="button" @click="previousMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15,18 9,12 15,6"></polyline>
+                                </svg>
+                            </button>
+                            <h3 class="calendar-month-year" x-text="currentMonthYear"></h3>
+                            <button type="button" @click="nextMonth()" class="calendar-nav-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9,18 15,12 9,6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Дни недели -->
+                        <div class="calendar-weekdays">
+                            <template x-for="day in weekDays" :key="day">
+                                <div class="calendar-weekday" x-text="day"></div>
+                            </template>
+                        </div>
+
+                        <!-- Дни календаря -->
+                        <div class="calendar-days">
+                            <template x-for="day in calendarDays" :key="day.date">
+                                <div class="calendar-day"
+                                     :class="day.classes"
+                                     @click="selectDate(day)"
+                                     x-text="day.day">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Выбранный период -->
+                    <div class="selected-period desktop-only" x-show="config.showSelectedPeriod">
+                        <span x-text="getSelectedPeriodText()"></span>
+                    </div>
+                        
+                    <!-- Кнопки действий -->
+                    <div class="calendar-actions">
+                        <button type="button" @click="clearSelection()" class="calendar-btn calendar-btn-secondary" :disabled="!hasSelection">
+                            Очистить
+                        </button>
+                        <button type="button" @click="applySelection()" class="calendar-btn calendar-btn-primary" :disabled="!hasSelection">
+                            Применить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/overlay-calendar.js"></script>
+</body>
+</html>
