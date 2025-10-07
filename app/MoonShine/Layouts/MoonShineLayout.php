@@ -40,6 +40,8 @@ use MoonShine\Laravel\Layouts\CompactLayout;
 use MoonShine\MenuManager\MenuGroup;
 use App\MoonShine\Resources\MoonShineUserResource;
 use App\MoonShine\Resources\MoonShineUserRoleResource;
+use App\MoonShine\Pages\CalendarDemoPage;
+use App\MoonShine\Pages\CalendarDemo;
 
 
 final class MoonShineLayout extends CompactLayout
@@ -59,6 +61,8 @@ final class MoonShineLayout extends CompactLayout
             MenuItem::make('Звонки2', Calls::class)->icon('phone'),
             MenuItem::make('Контакты', ContactResource::class)->icon('users'),
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
+            MenuItem::make('Демо календарей', CalendarDemoPage::class)->icon('calendar-days'),
+            MenuItem::make('Демо календарей', CalendarDemo::class)->icon('calendar-days'),
 
             MenuGroup::make(static fn () => __('moonshine::ui.resource.system'), [
                 MenuItem::make(

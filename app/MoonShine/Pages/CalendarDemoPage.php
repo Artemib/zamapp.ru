@@ -12,7 +12,6 @@ use Illuminate\Support\HtmlString;
 
 class CalendarDemoPage extends Page
 {
-    protected ?string $alias = 'calendar-demo';
 
     public function title(string $title = 'Демо календарей'): static
     {
