@@ -1,0 +1,447 @@
+/* Overlay Calendar Styles */
+.calendar-trigger {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background: white;
+    cursor: pointer;
+    min-width: 200px;
+    transition: border-color 0.2s;
+}
+
+.calendar-trigger:hover {
+    border-color: #9ca3af;
+}
+
+.calendar-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-text {
+    color: #374151;
+}
+
+.calendar-icon {
+    color: #6b7280;
+}
+
+/* Overlay */
+.calendar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.calendar-overlay-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+}
+
+/* Боковая панель */
+.calendar-sidebar {
+    width: 250px;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    padding: 24px;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #6b7280;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.close-btn-desktop {
+    display: none;
+}
+
+.close-btn-mobile {
+    display: none;
+}
+
+.period-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.period-option {
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #475569;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.period-option:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.period-option.active {
+    background: #10b981;
+    color: white;
+}
+
+.check-icon {
+    color: white;
+}
+
+/* Основной календарь */
+.calendar-main {
+    flex: 1;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.calendar-month-year {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: #6b7280;
+    transition: background-color 0.2s;
+}
+
+.calendar-nav-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.calendar-month-year {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 8px 4px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.calendar-day.other-month {
+    color: #d1d5db;
+}
+
+.calendar-day.today {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.calendar-day.selected {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.calendar-day.selected:hover {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.calendar-day.range-start-end {
+    background-color: #10b981 !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.calendar-day.range-start-end:hover {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.calendar-day.in-range {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.calendar-day.weekend {
+    color: #dc2626;
+}
+
+.calendar-day.normal-day {
+    color: #374151;
+}
+
+.calendar-day.normal-day:hover {
+    background-color: #f3f4f6;
+}
+
+.selected-period {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #000000;
+    font-weight: 500;
+}
+
+.calendar-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.calendar-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.calendar-btn-primary {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.calendar-btn-primary:hover {
+    background-color: #7c3aed;
+}
+
+.calendar-btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.calendar-btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.calendar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+.calendar-btn:disabled:hover {
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .calendar-overlay-content {
+        flex-direction: column;
+        max-width: 95vw;
+    }
+    
+    .calendar-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .period-options {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .period-option {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    .period-options {
+        display: none;
+    }
+    
+    .period-selector {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background-color: white;
+        font-size: 16px;
+        color: #374151;
+        margin-bottom: 16px;
+    }
+    
+    
+    
+    .calendar-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 16px;
+        border-top: 1px solid #e5e7eb;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+    }
+    
+    .calendar-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+}
+
+/* Десктопная версия */
+@media (min-width: 769px) {
+    .period-selector {
+        display: none;
+    }
+    
+    .desktop-only {
+        display: block;
+    }
+}
+
+/* Мобильная версия - полный экран */
+@media (max-width: 768px) {
+    .calendar-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 9999 !important;
+    }
+    
+    .calendar-overlay-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        flex-direction: column !important;
+    }
+    
+    .close-btn-desktop {
+        display: none;
+    }
+    
+    .close-btn-mobile {
+        display: block;
+    }
+    
+    .calendar-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px;
+        flex-shrink: 0;
+    }
+    
+    .calendar-main {
+        width: 100%;
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        padding-bottom: 100px; /* Отступ для кнопок */
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+    
+    /* Отключаем скролл body при открытом календаре */
+    body.calendar-open {
+        overflow: hidden;
+    }
+}

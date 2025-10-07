@@ -20,7 +20,8 @@ use MoonShine\Support\ListOf;
 use MoonShine\Laravel\Enums\Action;
 use MoonShine\UI\Components\ActionButton;
 use App\Enums\CallConstants;
-
+use MoonShine\UI\Components\Modal;
+use App\MoonShine\UI\Components\OverlayCalendar;
 
 
 #[Icon('phone')]
@@ -59,6 +60,10 @@ class CallResource extends ModelResource
         return parent::topButtons()->add(
             ActionButton::make($now, '#')->icon('calendar-days'),
             // ActionButton::make('Refresh 2', '#'),
+
+            ActionButton::make('Выбрать период')
+            ->icon('calendar-days')
+            ->onClick(fn() => 'document.querySelector(\'[x-data*="overlayCalendar"]\').__x.$data.toggleCalendar()')
         );
     }
 
@@ -69,7 +74,7 @@ class CallResource extends ModelResource
                 ActionButton::make('',fn(Call $item) => '/endpoint?id=' . $item->link_record_pbx)->icon('play'),
                 // ActionButton::make('Button 2', '/')
                 //     ->showInDropdown(),
-        );
+            );
     }
 
 
@@ -162,6 +167,17 @@ class CallResource extends ModelResource
     protected function detailFields(): iterable
     {
         return [];
+    }
+
+    /**
+     * @return list<ComponentContract>
+     */
+    protected function pageComponents(): array
+    {
+        return [
+            // Overlay календарь для выбора периода
+            OverlayCalendar::make('date_range', 'Выберите период')->render()
+        ];
     }
 
     /**

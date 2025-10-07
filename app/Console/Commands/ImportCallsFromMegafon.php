@@ -12,6 +12,9 @@ use Carbon\Carbon;
 class ImportCallsFromMegafon extends Command
 {
     /**
+     * РАБОЧАЯ КОМАНДА
+     * 
+     * 
      * The name and signature of the console command.
      *
      * @var string
