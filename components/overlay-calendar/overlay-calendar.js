@@ -144,6 +144,9 @@ function overlayCalendar(placeholder = 'Выберите дату') {
         selectDate(day) {
             const date = day.fullDate;
             
+            // Сбрасываем подсветку быстрых периодов при выборе даты в календаре
+            this.selectedPeriod = null;
+            
             if (!this.selectedStartDate) {
                 // Первый клик - выбираем начальную дату
                 this.selectedStartDate = date;
