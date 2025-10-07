@@ -10,19 +10,55 @@ function overlayCalendar() {
         
         // Снапшот конфигурации на момент инициализации
         config: null,
+        // Управление внутренним триггером и внешними биндингами
+        showInternalTrigger: true,
+        externalTriggerSelector: null,
+        externalTriggerEvent: 'click',
+        targetSelector: null,
+        targetStartSelector: null,
+        targetEndSelector: null,
+        _externalListenersBound: false,
         readConfig() {
             const element = this.$el;
             const sqp = element.dataset.showQuickPeriods;
             const ssp = element.dataset.showSelectedPeriod;
             const smn = element.dataset.showMonthNames;
+            const sit = element.dataset.internalTrigger;
+            const sdo = element.dataset.singleDateOnly;
+            this.showInternalTrigger = sit === undefined ? true : sit === 'true';
+            // Внешние параметры
+            this.externalTriggerSelector = element.dataset.triggerSelector || null;
+            this.externalTriggerEvent = element.dataset.triggerEvent || 'click';
+            this.targetSelector = element.dataset.targetSelector || null;
+            this.targetStartSelector = element.dataset.targetStart || null;
+            this.targetEndSelector = element.dataset.targetEnd || null;
+            const outFmt = element.dataset.outputFormat || 'Y-m-d';
+            const rangeDelim = element.dataset.rangeDelimiter || '|';
+            const rangeDelimValue = element.dataset.rangeDelimiterValue || rangeDelim;
+            const includeEod = element.dataset.includeEndOfDay === 'true';
+            const inputClasses = element.dataset.inputClasses || '';
+            const inputStyles = element.dataset.inputStyles || '';
+            const inputIcon = element.dataset.inputIcon || '<svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
+            const inputPlaceholder = element.dataset.inputPlaceholder || '';
+            const inputIconColor = element.dataset.inputIconColor || '';
             return {
                 placeholder: element.dataset.placeholder || 'Выберите дату',
-                showQuickPeriods: sqp === undefined ? true : sqp === 'true',
+                showQuickPeriods: sdo === 'true' ? false : (sqp === undefined ? true : sqp === 'true'),
                 quickPeriods: element.dataset.quickPeriods ? element.dataset.quickPeriods.split(',') : ['today', 'yesterday', 'current_week', 'last_week', 'current_month', 'last_month'],
                 primaryColor: element.dataset.primaryColor || '#3b82f6',
                 rangeColor: element.dataset.rangeColor || '#10b981',
                 showSelectedPeriod: ssp === undefined ? true : ssp === 'true',
-                showMonthNames: smn === undefined ? true : smn === 'true'
+                showMonthNames: smn === undefined ? true : smn === 'true',
+                singleDateOnly: sdo === 'true',
+                outputFormat: outFmt,
+                rangeDelimiter: rangeDelim,
+                rangeDelimiterForValue: rangeDelimValue,
+                includeEndOfDay: includeEod,
+                inputClasses: inputClasses,
+                inputStyles: inputStyles,
+                inputIcon: inputIcon,
+                inputPlaceholder: inputPlaceholder,
+                inputIconColor: inputIconColor
             };
         },
         
@@ -45,6 +81,17 @@ function overlayCalendar() {
             if (!this.weekDays) this.weekDays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
             if (!this.monthNames) this.monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
             // Цвета задаются инлайн стилями у корня
+
+            // Назначаем внешний триггер, если задан
+            if (this.externalTriggerSelector && !this._externalListenersBound) {
+                try {
+                    const triggers = document.querySelectorAll(this.externalTriggerSelector);
+                    triggers.forEach((t) => {
+                        t.addEventListener(this.externalTriggerEvent, this.toggleCalendar.bind(this));
+                    });
+                    this._externalListenersBound = true;
+                } catch (e) { /* ignore */ }
+            }
         },
         
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
@@ -56,13 +103,17 @@ function overlayCalendar() {
         
         get displayText() {
             if (this.selectedStartDate && this.selectedEndDate) {
-                const start = this.formatDate(this.selectedStartDate);
-                const end = this.formatDate(this.selectedEndDate);
-                return start === end ? start : start + ' - ' + end;
+                let endDateForOutput = new Date(this.selectedEndDate);
+                if (this.config.includeEndOfDay) {
+                    endDateForOutput.setHours(23, 59, 59, 999);
+                }
+                const start = this.formatDateByPattern(this.selectedStartDate, this.config.outputFormat);
+                const end = this.formatDateByPattern(endDateForOutput, this.config.outputFormat);
+                return start === end ? start : start + this.config.rangeDelimiter + end;
             } else if (this.selectedStartDate) {
-                return this.formatDate(this.selectedStartDate);
+                return this.formatDateByPattern(this.selectedStartDate, this.config.outputFormat);
             }
-            return this.config.placeholder;
+            return this.config.inputPlaceholder || this.config.placeholder;
         },
         
         get currentMonthYear() {
@@ -206,6 +257,12 @@ function overlayCalendar() {
                     this.selectedStartDate = null;
                     this.selectedEndDate = null;
                 } else {
+                    // Если одиночная дата — не разрешаем диапазон
+                    if (this.config.singleDateOnly) {
+                        this.selectedStartDate = date;
+                        this.selectedEndDate = null;
+                        return;
+                    }
                     // Выбираем конечную дату
                     if (date.getTime() < this.selectedStartDate.getTime()) {
                         this.selectedEndDate = this.selectedStartDate;
@@ -304,13 +361,65 @@ function overlayCalendar() {
         
         applySelection() {
             if (this.selectedStartDate && this.selectedEndDate) {
-                const start = this.formatDateForInput(this.selectedStartDate);
-                const end = this.formatDateForInput(this.selectedEndDate);
-                this.selectedValue = start + '|' + end;
+                let endDateForOutput = new Date(this.selectedEndDate);
+                if (this.config.includeEndOfDay) {
+                    endDateForOutput.setHours(23, 59, 59, 999);
+                }
+                const start = this.formatDateByPattern(this.selectedStartDate, this.config.outputFormat);
+                const end = this.formatDateByPattern(endDateForOutput, this.config.outputFormat);
+                this.selectedValue = start + this.config.rangeDelimiterForValue + end;
+                this._writeToTargets(start, end);
             } else if (this.selectedStartDate) {
-                this.selectedValue = this.formatDateForInput(this.selectedStartDate);
+                this.selectedValue = this.formatDateByPattern(this.selectedStartDate, this.config.outputFormat);
+                this._writeToTargets(this.selectedValue, null);
             }
             this.closeCalendar();
+        },
+
+        _writeToTargets(startValue, endValue) {
+            const getWritableElement = (selector) => {
+                if (!selector) return null;
+                let el = null;
+                try { el = document.querySelector(selector); } catch(e) { el = null; }
+                if (!el) return null;
+                // Если это не поле ввода, попробуем найти вложенный input/textarea
+                const isWritable = (node) => node && (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA' || 'value' in node);
+                if (!isWritable(el)) {
+                    const nested = el.querySelector('input, textarea');
+                    if (nested) return nested;
+                }
+                return el;
+            };
+            // Если заданы два целевых инпута (диапазон)
+            if (this.targetStartSelector || this.targetEndSelector) {
+                const startEl = getWritableElement(this.targetStartSelector);
+                const endEl = getWritableElement(this.targetEndSelector);
+                if (startEl) startEl.value = startValue || '';
+                if (endEl) endEl.value = endValue || '';
+                if (startEl) {
+                    startEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    startEl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                if (endEl) {
+                    endEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    endEl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                return;
+            }
+            // Иначе — единый инпут/элемент
+            if (this.targetSelector) {
+                const el = getWritableElement(this.targetSelector);
+                if (el) {
+                    const value = endValue ? `${startValue}${this.config.rangeDelimiter}${endValue}` : startValue || '';
+                    if ('value' in el) {
+                        el.value = value;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else {
+                        el.textContent = value;
+                    }
+                }
+            }
         },
         
         getSelectedPeriodText() {
@@ -338,10 +447,27 @@ function overlayCalendar() {
                    date.getFullYear();
         },
         
-        formatDateForInput(date) {
+        formatDateForInput(date) { // сохраним для обратной совместимости
             return date.getFullYear() + '-' + 
                    (date.getMonth() + 1).toString().padStart(2, '0') + '-' + 
                    date.getDate().toString().padStart(2, '0');
+        },
+
+        formatDateByPattern(date, pattern) {
+            // Поддерживаем Y, m, d, H, i, s
+            const Y = date.getFullYear().toString();
+            const m = (date.getMonth() + 1).toString().padStart(2, '0');
+            const d = date.getDate().toString().padStart(2, '0');
+            const H = date.getHours().toString().padStart(2, '0');
+            const i = date.getMinutes().toString().padStart(2, '0');
+            const s = date.getSeconds().toString().padStart(2, '0');
+            return (pattern || 'Y-m-d')
+                .replace(/Y/g, Y)
+                .replace(/m/g, m)
+                .replace(/d/g, d)
+                .replace(/H/g, H)
+                .replace(/i/g, i)
+                .replace(/s/g, s);
         },
         
         isToday(date) {

@@ -5,12 +5,37 @@ declare(strict_types=1);
 namespace App\MoonShine\UI\Components;
 
 use Illuminate\Contracts\Support\Renderable;
+use MoonShine\UI\Components\Icon;
 
 class OverlayCalendar implements Renderable
 {
     protected string $name;
     protected string $placeholder;
     protected ?string $value = null;
+    
+    // Внешний триггер и целевые инпуты
+    protected ?string $externalTriggerSelector = null; // CSS-селектор кнопки/элемента для открытия
+    protected string $externalTriggerEvent = 'click';
+    protected ?string $targetInputSelector = null; // единый инпут для результата (одиночная дата или диапазон в строке)
+    protected ?string $targetStartInputSelector = null; // при диапазоне — начало
+    protected ?string $targetEndInputSelector = null;   // при диапазоне — конец
+    protected bool $showInternalTrigger = true; // показывать ли встроенную кнопку-триггер
+
+    // Режим только одиночной даты (без диапазона)
+    protected bool $singleDateOnly = false;
+
+    // Формат вывода и разделитель диапазона
+    protected string $outputFormat = 'Y-m-d';
+    protected string $rangeDelimiter = ' — ';
+    protected string $rangeDelimiterForValue = ' — '; // разделитель для value (по умолчанию такой же как для отображения)
+    protected bool $includeEndOfDay = false; // включительно считать последний день (23:59:59)
+    
+    // Кастомизация базового инпута
+    protected ?string $inputClasses = null; // дополнительные CSS классы для инпута
+    protected ?string $inputStyles = null; // инлайн стили для инпута
+    protected ?string $inputIcon = null; // кастомная иконка (SVG код или класс)
+    protected ?string $inputIconColor = null; // цвет иконки
+    protected ?string $inputPlaceholder = null; // кастомный placeholder
     
     // Новые параметры настройки
     protected bool $showQuickPeriods = true;
@@ -39,6 +64,55 @@ class OverlayCalendar implements Renderable
     public static function make(string $name, ?string $placeholder = null): self
     {
         return new self($name, $placeholder);
+    }
+
+    // Настройка внешнего триггера
+    public function openWith(string $triggerSelector, string $targetSelector, ?string $targetEndSelector = null, string $event = 'click'): self
+    {
+        $this->externalTriggerSelector = $triggerSelector;
+        $this->externalTriggerEvent = $event;
+        // Если указан второй инпут, используем пару start/end
+        if ($targetEndSelector) {
+            $this->targetStartInputSelector = $targetSelector;
+            $this->targetEndInputSelector = $targetEndSelector;
+            $this->targetInputSelector = null;
+        } else {
+            $this->targetInputSelector = $targetSelector;
+            $this->targetStartInputSelector = null;
+            $this->targetEndInputSelector = null;
+        }
+        // По умолчанию скрываем встроенный триггер, раз есть внешний
+        $this->showInternalTrigger = false;
+        return $this;
+    }
+
+    public function triggerSelector(string $selector, string $event = 'click'): self
+    {
+        $this->externalTriggerSelector = $selector;
+        $this->externalTriggerEvent = $event;
+        return $this;
+    }
+
+    public function targetInput(string $selector): self
+    {
+        $this->targetInputSelector = $selector;
+        $this->targetStartInputSelector = null;
+        $this->targetEndInputSelector = null;
+        return $this;
+    }
+
+    public function targetRangeInputs(string $startSelector, string $endSelector): self
+    {
+        $this->targetStartInputSelector = $startSelector;
+        $this->targetEndInputSelector = $endSelector;
+        $this->targetInputSelector = null;
+        return $this;
+    }
+
+    public function showInternalTrigger(bool $show = true): self
+    {
+        $this->showInternalTrigger = $show;
+        return $this;
     }
 
     public function value(?string $value): self
@@ -127,6 +201,65 @@ class OverlayCalendar implements Renderable
         return $this;
     }
 
+    // Только одна дата, без диапазона, прячем быстрый выбор
+    public function singleDateOnly(bool $single = true): self
+    {
+        $this->singleDateOnly = $single;
+        if ($single) {
+            $this->showQuickPeriods = false;
+        }
+        return $this;
+    }
+
+    // Формат вывода результата (например: 'Y.mm.dd H:i:s')
+    public function format(string $format): self
+    {
+        $this->outputFormat = $format;
+        return $this;
+    }
+
+    // Кастомный разделитель диапазона (по умолчанию '|')
+    // Первый параметр - для отображения, второй опциональный - для value
+    public function rangeDelimiter(string $delimiter, ?string $delimiterForValue = null): self
+    {
+        $this->rangeDelimiter = $delimiter;
+        $this->rangeDelimiterForValue = $delimiterForValue ?? $delimiter;
+        return $this;
+    }
+
+    // Включительно считать последний день (ставит время 23:59:59 у конечной даты диапазона)
+    public function includeEndOfDay(bool $include = true): self
+    {
+        $this->includeEndOfDay = $include;
+        return $this;
+    }
+
+    // Кастомизация базового инпута
+    public function addClass(string $classes): self
+    {
+        $this->inputClasses = $classes;
+        return $this;
+    }
+
+    public function addStyles(string $styles): self
+    {
+        $this->inputStyles = $styles;
+        return $this;
+    }
+
+    public function icon(string $icon, ?string $color = null): self
+    {
+        $this->inputIcon = $icon;
+        $this->inputIconColor = $color;
+        return $this;
+    }
+
+    public function placeholder(string $placeholder): self
+    {
+        $this->inputPlaceholder = $placeholder;
+        return $this;
+    }
+
     public function render(): string
     {
         $calendarId = 'overlay-calendar-' . uniqid();
@@ -162,11 +295,40 @@ class OverlayCalendar implements Renderable
             'data-weekdays' => $translations['weekdays'],
             'data-months' => $translations['months'],
             'data-labels' => $translations['labels'],
+            'data-internal-trigger' => $this->showInternalTrigger ? 'true' : 'false',
+            'data-single-date-only' => $this->singleDateOnly ? 'true' : 'false',
+            'data-output-format' => $this->outputFormat,
+            'data-range-delimiter' => $this->rangeDelimiter,
+            'data-range-delimiter-value' => $this->rangeDelimiterForValue,
+            'data-include-end-of-day' => $this->includeEndOfDay ? 'true' : 'false',
+            'data-input-classes' => $this->inputClasses,
+            'data-input-styles' => $this->inputStyles,
+            'data-input-icon' => $this->inputIcon ? $this->renderIcon($this->inputIcon) : null,
+            'data-input-icon-color' => $this->inputIconColor,
+            'data-input-placeholder' => $this->inputPlaceholder,
         ];
+
+        // Внешние биндинги
+        if ($this->externalTriggerSelector) {
+            $dataAttributes['data-trigger-selector'] = $this->externalTriggerSelector;
+            $dataAttributes['data-trigger-event'] = $this->externalTriggerEvent;
+        }
+        if ($this->targetInputSelector) {
+            $dataAttributes['data-target-selector'] = $this->targetInputSelector;
+        }
+        if ($this->targetStartInputSelector) {
+            $dataAttributes['data-target-start'] = $this->targetStartInputSelector;
+        }
+        if ($this->targetEndInputSelector) {
+            $dataAttributes['data-target-end'] = $this->targetEndInputSelector;
+        }
         
         $dataAttrString = '';
         foreach ($dataAttributes as $key => $value) {
-            $dataAttrString .= ' ' . $key . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
+            if ($value === null) {
+                continue;
+            }
+            $dataAttrString .= ' ' . $key . '="' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8') . '"';
         }
         
         // Передаём цвета как инлайн CSS-переменные на корневой элемент календаря,
@@ -216,17 +378,17 @@ class OverlayCalendar implements Renderable
                    :value="selectedValue">
             
             <!-- Кнопка для открытия календаря -->
-            <div class="calendar-trigger" @click="toggleCalendar()">
-                <div class="calendar-display">
-                    <span x-text="displayText" class="calendar-text"></span>
-                    <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
+            <template x-if="showInternalTrigger">
+                <div class="calendar-trigger" 
+                     :class="config.inputClasses" 
+                     :style="config.inputStyles"
+                     @click="toggleCalendar()">
+                    <div class="calendar-display">
+                        <span x-text="displayText" class="calendar-text"></span>
+                        <div x-html="config.inputIcon" class="calendar-icon" :style="{ color: config.inputIconColor }"></div>
+                    </div>
                 </div>
-            </div>
+            </template>
             
             <!-- Overlay календарь -->
             <div x-show="isOpen" 
@@ -349,5 +511,21 @@ class OverlayCalendar implements Renderable
             
             $assetsIncluded = true;
         }
+    }
+
+    private function renderIcon(string $icon): string
+    {
+        // Если это HTML иконка, возвращаем как есть
+        if (str_contains($icon, '<') || str_contains($icon, 'svg')) {
+            return $icon;
+        }
+        
+        // Если это иконка MoonShine, рендерим через буферизацию
+        ob_start();
+        echo (new Icon($icon))->render();
+        $rendered = ob_get_clean();
+        
+        
+        return $rendered;
     }
 }
